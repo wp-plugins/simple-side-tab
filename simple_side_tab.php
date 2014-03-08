@@ -3,13 +3,13 @@
 Plugin Name: Simple Side Tab
 Plugin URI: http://rumspeed.com/wordpress-plugins/simple-side-tab/
 Description: Display a side tab that you can easily link to any page. Customize the tab text, font and colors. It's that simple. That's Simple Side Tab.
-Version: 1.0.0
+Version: 1.1.0
 Author: Scot Rumery
 Author URI: http://rumspeed.com/scot-rumery/
 License: GPLv2
 */
 
-/*  Copyright 2013  Scot Rumery (email : scot@rumspeed.com)
+/*  Copyright 2014  Scot Rumery (email : scot@rumspeed.com)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ function rum_sst_activate_plugin() {
 		'text_color'       => '#FFFFFF',
 		'tab_color'        => '#A0244E',
 		'hover_color'      => '#A4A4A4',
-		'target_blank'     => '0'
+		'target_blank'     => '0',
+		'left_right'	   => 'left'
 		);
 
 	// create field in WP_options to store all plugin data in one field
@@ -133,15 +134,46 @@ function rum_sst_body_tag_html() {
 	// fetch individual values from the plugin option variable array
 	$rum_sst_text_for_tab			= $rum_sst_plugin_option_array[ 'text_for_tab' ];
 	$rum_sst_tab_url				= $rum_sst_plugin_option_array[ 'tab_url' ];
-	$rum_sst_target_blank			= $rum_sst_plugin_option_array[ 'target_blank' ];
+
+	// this field was added after the initial release so it may not be set
+	if ( isset($rum_sst_plugin_option_array[ 'target_blank' ] ) ) {
+		$rum_sst_target_blank			= $rum_sst_plugin_option_array[ 'target_blank' ];
+	} else {
+		$rum_sst_target_blank			= '0';
+	}
+
+	// this field was added after the initial release so it may not be set
+	if ( isset($rum_sst_plugin_option_array[ 'left_right' ] ) ) {
+		$rum_sst_left_right			= $rum_sst_plugin_option_array[ 'left_right' ];
+	} else {
+		$rum_sst_left_right			= 'left';
+	}
 
 	// set the page target
 	if ($rum_sst_target_blank == '1') {
 		$rum_sst_target_blank = ' target="_blank"';
 	}
-
-	// Write HTML to render tab
-	echo '<a href="' . esc_url( $rum_sst_tab_url ) . '"' . $rum_sst_target_blank . '><div id="rum_sst_tab" class="rum_sst_contents rum_sst_left">' . esc_html( $rum_sst_text_for_tab ) . '</div></a>';
+	
+	// set side of page for tab
+	if ($rum_sst_left_right == 'right') {
+		$rum_sst_left_right_location = 'rum_sst_right';
+	}else {
+		$rum_sst_left_right_location = 'rum_sst_left';
+	}
+	
+	if(preg_match('/(?i)msie [7-8]/',$_SERVER['HTTP_USER_AGENT']))
+	{
+	    // if IE 7 or 8
+	    // Write HTML to render tab
+		echo '<a href="' . esc_url( $rum_sst_tab_url ) . '"' . $rum_sst_target_blank . '><div id="rum_sst_tab" class="rum_sst_contents less-ie-9 ' . $rum_sst_left_right_location . '">' . esc_html( $rum_sst_text_for_tab ) . '></a>';
+	}
+	else
+	{
+	   // if IE>8
+	   // Write HTML to render tab
+	   echo '<a href="' . esc_url( $rum_sst_tab_url ) . '"' . $rum_sst_target_blank . ' id="rum_sst_tab" class="rum_sst_contents ' . $rum_sst_left_right_location . '">' . esc_html( $rum_sst_text_for_tab ) . '</a>';
+	}
+	
 }
 
 
@@ -185,7 +217,21 @@ function rum_sst_options_page() {
 	$rum_sst_text_color				= $rum_sst_plugin_option_array[ 'text_color' ];
 	$rum_sst_tab_color				= $rum_sst_plugin_option_array[ 'tab_color' ];
 	$rum_sst_hover_color			= $rum_sst_plugin_option_array[ 'hover_color' ];
-	$rum_sst_target_blank			= $rum_sst_plugin_option_array[ 'target_blank' ];
+
+	// this field was added after the initial release so it may not be set
+	if ( isset($rum_sst_plugin_option_array[ 'target_blank' ] ) ) {
+		$rum_sst_target_blank			= $rum_sst_plugin_option_array[ 'target_blank' ];
+	} else {
+		$rum_sst_target_blank			= '0';
+	}
+
+	// this field was added after the initial release so it may not be set
+	if ( isset($rum_sst_plugin_option_array[ 'left_right' ] ) ) {
+		$rum_sst_left_right			= $rum_sst_plugin_option_array[ 'left_right' ];
+	} else {
+		$rum_sst_left_right			= 'left';
+	}
+
 
 ?>
 
@@ -263,10 +309,19 @@ function rum_sst_options_page() {
 
 
 		<tr valign="top">
-		<th scope="row"><label for="rum_sst_pixels_from_top">Position from top (px)</label></th>
-		<td><input maxlength="4" size="4" type="text" name="rum_sst_plugin_options[pixels_from_top]" value="<?php echo sanitize_text_field( $rum_sst_pixels_from_top ); ?>" /></td>
+		<th scope="row"><label for="rum_sst_left_right">Show tab on left or right</label></th>
+		<td>
+			<input name="rum_sst_plugin_options[left_right]" type="radio" value="left" <?php checked( 'left', $rum_sst_left_right ); ?> /> Left <br />
+			<input name="rum_sst_plugin_options[left_right]" type="radio" value="right" <?php checked( 'right', $rum_sst_left_right ); ?> /> Right		
+		</td>
 		</tr>
 
+
+		<tr valign="top">
+		<th scope="row"><label for="rum_sst_pixels_from_top">Position from top (px)</label></th>
+		<td><input maxlength="4" size="4" type="text" name="rum_sst_plugin_options[pixels_from_top]" value="<?php echo sanitize_text_field( $rum_sst_pixels_from_top ); ?>" /></td>
+		</tr>		
+		
 	</table>
 
 <BR>
@@ -343,11 +398,9 @@ function rum_sst_custom_css_hook() {
 	$rum_sst_plugin_option_array	= get_option( 'rum_sst_plugin_options' );
 
 	// fetch individual values from the plugin option variable array
-	$rum_sst_text_for_tab			= $rum_sst_plugin_option_array[ 'text_for_tab' ];
 	$rum_sst_font_family			= $rum_sst_plugin_option_array[ 'font_family' ];
 	$rum_sst_font_weight_bold		= $rum_sst_plugin_option_array[ 'font_weight_bold' ];
 	$rum_sst_text_shadow			= $rum_sst_plugin_option_array[ 'text_shadow' ];
-	$rum_sst_tab_url				= $rum_sst_plugin_option_array[ 'tab_url' ];
 	$rum_sst_pixels_from_top		= $rum_sst_plugin_option_array[ 'pixels_from_top' ];
 	$rum_sst_text_color				= $rum_sst_plugin_option_array[ 'text_color' ];
 	$rum_sst_tab_color				= $rum_sst_plugin_option_array[ 'tab_color' ];
@@ -414,14 +467,31 @@ function rum_sst_custom_css_hook() {
 	-ms-transform:rotate(270deg);
 	-o-transform:rotate(270deg);
 	transform:rotate(270deg);
-
-	<!--[if lte IE 8]>
-		/* Internet Explorer 8 and below */
-		-ms-transform:rotate(270deg) / !important;
-		*filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
-	<![endif]-->
-
 }
+
+.rum_sst_right {
+	right:-156px;
+	cursor: pointer;
+	-webkit-transform-origin:0 0;
+	-moz-transform-origin:0 0;
+	-o-transform-origin:0 0;
+	-ms-transform-origin:0 0;
+	-webkit-transform:rotate(90deg);
+	-moz-transform:rotate(90deg);
+	-ms-transform:rotate(90deg);
+	-o-transform:rotate(90deg);
+	transform:rotate(90deg);
+}
+
+.rum_sst_right.less-ie-9 {
+	right:-120px;
+	filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+}
+
+.rum_sst_left.less-ie-9 {
+	filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
 /* End Simple Side Tab Styles*/
 
 </style>
